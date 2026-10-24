@@ -9,7 +9,7 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "results"
 
-categories = ["candle", "capsules"]
+categories = ["candle", "capsules","cashew"]
 methods = {
     "Handcrafted": "_official_baseline.csv",
     "DINOv2": "_dinov2_baseline.csv",

@@ -2,22 +2,27 @@
 
 ## About the Project
 
-This project looks at how well pretrained visual features can identify unusual images in an industrial inspection setting. I used the VisA dataset to compare two approaches: simple handcrafted image features and features extracted using a pretrained DINOv2 model.
+This project investigates how pretrained visual representations perform in industrial image anomaly detection. Using the VisA dataset, I compare simple handcrafted image features with features extracted from a pretrained DINOv2 model.
 
-The main goal was to understand whether pretrained visual representations can detect anomalies more effectively than basic colour and texture features, even without training a separate classifier.
+The main research question is:
+
+**Do pretrained visual representations improve image-level anomaly detection compared with basic handcrafted colour and texture features when using the same nearest-neighbour scoring method?**
+
+The project focuses on evaluating existing feature representations rather than developing a new anomaly detection algorithm.
 
 ## Dataset
 
 The experiments use the official one-class split provided with the VisA dataset.
 
-I started with two object categories:
+Three object categories have been evaluated:
 
 - **Candle**
 - **Capsules**
+- **Cashew**
 
-For each category, the training set contains normal images, while the test set contains both normal and anomalous images. The official split was used to keep the evaluation consistent.
+For each category, the training set contains normal images, while the test set contains both normal and anomalous images. The official split is used to maintain a consistent evaluation setup.
 
-Dataset: [VisA – A Large-Scale Benchmark for Visual Anomaly Detection](https://github.com/amazon-science/spot-diff)
+Dataset: [VisA — A Large-Scale Benchmark for Visual Anomaly Detection](https://github.com/amazon-science/spot-diff)
 
 The dataset is not included in this repository. Please obtain it from the original source and follow its usage terms.
 
@@ -25,38 +30,70 @@ The dataset is not included in this repository. Please obtain it from the origin
 
 ### 1. Handcrafted Features
 
-I extracted basic colour and texture-related features from each image, including RGB channel statistics, grayscale statistics, and horizontal and vertical image gradients.
+I extracted 10-dimensional image features comprising:
 
-These features were used as a simple baseline. After standardising the features using the normal training data, I applied a k-nearest neighbours approach to assign anomaly scores to test images.
+- RGB channel means and standard deviations
+- Grayscale mean and standard deviation
+- Mean absolute horizontal and vertical image gradients
+
+The features were standardised using statistics from the normal training data. A k-nearest neighbours (k-NN) model with *k = 5* was then used to calculate anomaly scores based on distances to normal training samples.
+
+This method serves as a simple, interpretable baseline.
 
 ### 2. DINOv2 Features
 
-For the second approach, I used the pretrained `facebook/dinov2-small` model to extract image representations.
+For the second approach, I used the pretrained `facebook/dinov2-small` model to extract 384-dimensional image representations from its CLS token.
 
-The extracted features were L2-normalised, and the same nearest-neighbour approach was used to calculate anomaly scores. This made it possible to compare the two feature methods while keeping the scoring procedure similar.
+The extracted representations were L2-normalised. The same k-NN setting (*k = 5*) was used to calculate anomaly scores, allowing a comparison between handcrafted and pretrained features while keeping the scoring method similar.
 
-The experiments were run on CPU.
+The experiments were run on CPU. No separate classifier was trained, and the pretrained DINOv2 model was not fine-tuned for this project.
+
+## Evaluation Metrics
+
+Two image-level metrics were used:
+
+- **ROC-AUC:** Measures how well anomaly scores rank anomalous images above normal images.
+- **Average Precision (AP):** Summarises precision-recall performance, accounting for the balance of normal and anomalous test images.
+
+Higher values indicate better performance for both metrics.
 
 ## Results
 
-The following table shows the results obtained on the two categories tested so far.
+The following table reports the results obtained on the three evaluated VisA categories.
 
 | Category | Feature Method | ROC-AUC | Average Precision |
 |---|---|---:|---:|
-| Candle | Handcrafted features | 0.8237 | 0.8565 |
-| Candle | DINOv2 features | 0.9269 | 0.9348 |
-| Capsules | Handcrafted features | 0.7267 | 0.8599 |
-| Capsules | DINOv2 features | 0.8213 | 0.8818 |
+| Candle | Handcrafted | 0.8237 | 0.8565 |
+| Candle | DINOv2 | **0.9269** | **0.9348** |
+| Capsules | Handcrafted | 0.7267 | 0.8599 |
+| Capsules | DINOv2 | **0.8213** | **0.8818** |
+| Cashew | Handcrafted | **0.9488** | **0.9714** |
+| Cashew | DINOv2 | 0.9248 | 0.9643 |
 
-DINOv2 features performed better than the handcrafted features on both categories in these experiments. The difference was particularly noticeable in ROC-AUC.
+### Observations
 
-These results are encouraging, but they cover only two categories and should not be treated as a complete evaluation of the VisA dataset.
+- **Candle:** DINOv2 achieved a higher ROC-AUC by 0.1032 and a higher AP by 0.0783.
+- **Capsules:** DINOv2 achieved a higher ROC-AUC by 0.0946 and a higher AP by 0.0219.
+- **Cashew:** Handcrafted features achieved a higher ROC-AUC by 0.0240 and a higher AP by 0.0071.
+
+In these experiments, DINOv2 performed better on candle and capsules, while handcrafted features performed better on cashew. This suggests that the relative performance of feature representations can vary across object categories.
+
+These are preliminary results from three categories, not a complete evaluation of VisA. The observed differences have not been tested for statistical significance.
+
+## Result Visualisations
+
+The following figures are generated by `src/compare_all_results.py`:
+
+- `results/comparison_roc-auc.png` — ROC-AUC comparison across categories.
+- `results/comparison_average_precision.png` — Average Precision comparison across categories.
+
+The combined metrics are saved to `results/combined_results.csv`.
 
 ## Project Structure
 
 ```text
 VisualAnomalyResearch/
-├── data/
+├── data/                         # Local dataset; not tracked by Git
 │   └── split_csv/
 ├── src/
 │   ├── baseline_experiment.py
@@ -70,50 +107,76 @@ VisualAnomalyResearch/
 │   ├── candle_dinov2_baseline.csv
 │   ├── capsules_official_baseline.csv
 │   ├── capsules_dinov2_baseline.csv
+│   ├── cashew_official_baseline.csv
+│   ├── cashew_dinov2_baseline.csv
+│   ├── combined_results.csv
 │   ├── comparison_roc-auc.png
 │   └── comparison_average_precision.png
 ├── check_environment.py
+├── requirements.txt
 └── README.md
 ```
 
+Each category's result files contain per-image predictions and anomaly scores. Corresponding `.npz` files are also generated by the experiment scripts.
+
 ## Running the Experiments
 
-Run these commands from the project root directory.
+Run the commands from the project root directory.
 
-Install the required libraries if they are not already installed:
+### 1. Install dependencies
 
 ```bash
-pip install torch torchvision transformers numpy scikit-learn matplotlib pandas pillow
+pip install -r requirements.txt
 ```
 
-Run the handcrafted baseline:
+### 2. Configure the category
+
+In `src/official_baseline.py` or `src/dinov2_baseline.py`, set `OBJECT_NAME` to one of the supported categories:
+
+```python
+OBJECT_NAME = "candle"
+```
+
+For example, use `"capsules"` or `"cashew"` to evaluate another category.
+
+Ensure the VisA dataset and official split CSV are available in the expected `data/` directory, with paths matching those configured in the scripts.
+
+### 3. Run the handcrafted baseline
 
 ```bash
 python src/official_baseline.py
 ```
 
-Run the DINOv2 baseline:
+### 4. Run the DINOv2 baseline
 
 ```bash
 python src/dinov2_baseline.py
 ```
 
-Generate the combined comparison table and graphs:
+Run both methods for each category you want to evaluate.
+
+### 5. Generate combined results and graphs
 
 ```bash
 python src/compare_all_results.py
 ```
 
-The scripts expect the VisA dataset and its official split CSV to be available in the project’s `data/` directory. Check the paths configured in the scripts if your dataset is stored elsewhere.
+The comparison script expects the per-category CSV files from both methods to exist in the `results/` directory.
 
-## Limitations and Next Steps
+## Limitations and Future Work
 
-This is an ongoing experimental project, not a new anomaly detection algorithm. The current results are based on only two object categories, and the experiments use image-level anomaly scores rather than pixel-level anomaly localisation.
+- The current evaluation covers only three of the VisA object categories.
+- The experiments report image-level anomaly detection metrics; pixel-level anomaly localisation is not evaluated.
+- The handcrafted baseline uses a small set of basic image statistics and gradients, so it does not represent all possible traditional feature methods.
+- The evaluation uses a simple k-NN scoring procedure and one reported experimental setup per category.
+- Statistical significance and run-to-run variability have not been established.
+- Results may depend on image preprocessing, feature extraction, and the selected scoring procedure.
 
-The current setup also uses a simple nearest-neighbour scoring method. More categories, repeated runs where applicable, and additional baselines would be useful before drawing broader conclusions.
-
-Next, I plan to extend the evaluation to more VisA categories, review the results in more detail, and document the experimental setup and limitations more thoroughly.
+Future work could extend the evaluation to more VisA categories, investigate additional pretrained representations and baselines, evaluate pixel-level localisation, and assess robustness across experimental settings.
 
 ## Acknowledgements
 
 This project uses the VisA dataset and the pretrained DINOv2 model. Credit goes to the original authors and maintainers of these resources.
+
+- [VisA dataset and benchmark](https://github.com/amazon-science/spot-diff)
+- [DINOv2](https://github.com/facebookresearch/dinov2)

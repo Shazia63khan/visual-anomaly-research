@@ -15,7 +15,7 @@ CSV_PATH = ROOT / "data" / "split_csv" / "1cls.csv"
 RESULTS_DIR = ROOT / "results"
 RESULTS_DIR.mkdir(exist_ok=True)
 
-OBJECT_NAME = "capsules"
+OBJECT_NAME = "cashew"
 MODEL_NAME = "facebook/dinov2-small"
 BATCH_SIZE = 8
 
