@@ -1,8 +1,8 @@
-torch
-torchvision
-transformers
-numpy
-scikit-learn
+torch==2.13.0+cpu
+torchvision==0.28.0+cpu
+transformers==5.16.1
+numpy==2.5.1
+scikit-learn==1.9.0
 matplotlib
-pandas
-Pillow
+pandas==3.0.3
+Pillow==12.2.0
