@@ -101,6 +101,7 @@ VisualAnomalyResearch/
 │   ├── official_baseline.py
 │   ├── dinov2_baseline.py
 │   ├── compare_results.py
+│   ├── verify_results.py
 │   └── compare_all_results.py
 ├── results/
 │   ├── candle_official_baseline.csv
@@ -122,6 +123,7 @@ Each category's result files contain per-image predictions and anomaly scores. C
 ## Running the Experiments
 
 Run the commands from the project root directory.
+**Environment note:** The experiments were developed using Python 3.13.14 on CPU. Package versions are documented in `requirements.txt`. Installing the CPU-specific PyTorch build may require the official PyTorch CPU package index.
 
 ### 1. Install dependencies
 
