@@ -14,7 +14,7 @@ This study investigates whether pretrained DINOv2 representations improve image-
 
 ## 2. Research Question
 
-Do pretrained visual representations improve image-level anomaly detection compared with basic handcrafted colour and texture features when using the same nearest-neighbour scoring method?
+Do pretrained visual representations improve image-level anomaly detection compared with basic handcrafted colour and image-statistics features when using the same nearest-neighbour scoring method?
 
 ## 3. Dataset
 
@@ -95,9 +95,9 @@ This analysis shows that performance depends on the category and scoring configu
 
 ## 7. Normal-Only Threshold Calibration and Test Evaluation
 
-A separate experiment evaluated threshold calibration using normal training images from the official VisA split. For each category, the normal training images were randomly divided into a fitting subset and a calibration subset using random seed 42. The fitting subset was used to fit the feature scaler and k-nearest-neighbour model, while the calibration subset was used exclusively to select a threshold.
+A separate experiment investigated threshold calibration using normal training images from the official VisA split. For each category, the normal training images were randomly divided into a fitting subset and a calibration subset using random seed 42. The fitting subset was used to fit the feature scaler and k-nearest-neighbour model, while the calibration subset was used exclusively to select an anomaly threshold.
 
-The experiment used \(k=5\) and selected the 95th-percentile calibration score as the anomaly threshold. The fitted model and calibrated threshold were then evaluated on the official test set without using test labels to select the threshold.
+The experiment used \(k=5\) and an empirical upper-quantile threshold targeting a nominal 5% false-positive rate. The fitted model and selected threshold were then evaluated on the official test set. Test labels were not used to select the threshold.
 
 | Category | Fit Normal Images | Calibration Normal Images | Test Images |
 |---|---:|---:|---:|
@@ -105,7 +105,7 @@ The experiment used \(k=5\) and selected the 95th-percentile calibration score a
 | Capsules | 434 | 108 | 160 |
 | Cashew | 360 | 90 | 150 |
 
-### 7.1 Independent Test Results
+### 7.1 Calibrated-Threshold Test Results
 
 | Category | Calibrated Threshold | Test FPR | Test TPR | ROC-AUC | Average Precision |
 |---|---:|---:|---:|---:|---:|
@@ -113,15 +113,15 @@ The experiment used \(k=5\) and selected the 95th-percentile calibration score a
 | Capsules | 2.130894 | 0.0000 | 0.2700 | 0.7153 | 0.8556 |
 | Cashew | 1.590245 | 0.0200 | 0.4800 | 0.9480 | 0.9700 |
 
-The results illustrate the trade-off between false-positive control and anomaly detection. The calibrated threshold produced a test false-positive rate of 5% for candle, 0% for capsules, and 2% for cashew. However, the corresponding true-positive rates were 57%, 27%, and 48%, respectively. In particular, the capsules result shows that a low false-positive rate does not necessarily imply strong anomaly detection.
+The results illustrate the trade-off between false-positive control and anomaly detection. The observed test false-positive rates were 5% for candle, 0% for capsules, and 2% for cashew, while the corresponding true-positive rates were 57%, 27%, and 48%, respectively. These results show that a low observed false-positive rate does not necessarily imply strong anomaly detection.
 
 ROC-AUC and Average Precision evaluate the ranking of anomaly scores across thresholds, whereas FPR and TPR evaluate predictions at the selected threshold. These metrics therefore provide complementary information.
 
 ### 7.2 Limitations
 
-The calibration threshold was estimated from a finite sample of normal images, so the resulting test FPR is not guaranteed to equal the nominal 5% target. The observed test rates are estimates based on relatively small test subsets and may vary across different data samples.
+The threshold was estimated from a finite sample of normal calibration images, so the nominal 5% target does not guarantee a 5% false-positive rate on unseen data. The observed test rates are estimates based on relatively small test subsets and may vary across different data samples.
 
-This experiment uses handcrafted image features and a fixed value of \(k=5\). Its results should not be directly compared with the earlier baseline as if both models had been fitted on identical training data, because this experiment reserves a portion of normal training images for threshold calibration. The findings are preliminary and are limited to three VisA categories.
+This experiment uses handcrafted image features and a fixed value of \(k=5\). Its results should not be directly compared with the earlier baseline as if both models had been fitted on identical training data, because this experiment reserves a portion of normal training images for threshold calibration. The findings are preliminary and limited to three VisA categories.
 
 ## 8. Limitations
 
@@ -129,18 +129,18 @@ This experiment uses handcrafted image features and a fixed value of \(k=5\). It
 - The experiments measure image-level anomaly detection, not pixel-level defect localisation.
 - The handcrafted baseline uses a small set of basic image statistics and gradients.
 - The method uses a simple nearest-neighbour scoring procedure.
-- The neighbour-count sensitivity analysis uses the official test set and is exploratory.
-- Threshold calibration uses normal-only validation data and does not establish anomaly-detection accuracy.
+- The neighbour-count sensitivity analysis uses the official test set and is exploratory, rather than an independent hyperparameter-selection procedure.
+- Threshold calibration evaluates predictions at a selected operating threshold; it does not, by itself, establish overall anomaly-detection performance.
 - Statistical significance and run-to-run variability have not been established.
 - The results may depend on preprocessing, feature extraction, and scoring choices.
 
 ## 9. Future Work
 
-Future work could evaluate more VisA categories, include additional feature representations, investigate pixel-level anomaly localisation, and use a separate labelled validation set for threshold and hyperparameter selection. Repeated experiments and statistical uncertainty estimates would also strengthen the conclusions.
+Future work could evaluate more VisA categories, include additional feature representations, investigate pixel-level anomaly localisation, and use a separate validation set for threshold and hyperparameter selection. Repeated experiments and statistical uncertainty estimates would also strengthen the conclusions.
 
 ## 10. Conclusion
 
-In this preliminary evaluation, pretrained DINOv2 representations improved image-level anomaly ranking on candle and capsules, while the handcrafted baseline performed better on cashew. The category-dependent results motivate broader evaluation before drawing general conclusions about pretrained representations for industrial anomaly detection.
+In this preliminary evaluation, pretrained DINOv2 representations improved image-level anomaly ranking on candle and capsules, while the handcrafted baseline performed better on cashew. These category-dependent results motivate broader evaluation before drawing general conclusions about pretrained visual representations for industrial anomaly detection.
 
 ## Reproducibility
 
@@ -154,3 +154,5 @@ Main result files:
 - `results/knn_robustness.csv`
 - `results/dinov2_robustness.csv`
 - `results/normal_only_validation.csv`
+
+For improved reproducibility, future revisions should record the exact pretrained model revision and relevant package versions alongside the experiment settings.

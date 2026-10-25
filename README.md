@@ -103,7 +103,7 @@ The robustness results are saved in:
 
 A separate experiment evaluated threshold calibration using normal training images from the VisA categories candle, capsules, and cashew.
 
-For each category, the normal training images were divided into a fitting subset and a calibration subset using random seed 42. Feature standardisation and the k-NN model were fitted using only the fitting subset. The experiment used \(k=5\), and the 95th percentile of calibration normal-image scores was selected as the anomaly threshold.
+For each category, the normal training images were divided into a fitting subset and a calibration subset using random seed 42. Feature standardisation and the k-NN model were fitted using only the fitting subset.The experiment used \(k=5\) and an empirical upper-quantile threshold targeting a nominal 5% false-positive rate.
 
 The calibrated threshold was then evaluated on the official test set without using test labels to select the threshold.
 
@@ -113,13 +113,13 @@ The calibrated threshold was then evaluated on the official test set without usi
 | Capsules | 434 | 108 | 160 |
 | Cashew | 360 | 90 | 150 |
 
-### Independent Test Results
+### Calibrated-Threshold Test Results
 
-| Category | Test FPR | Test TPR | ROC-AUC | Average Precision |
-|---|---:|---:|---:|---:|
-| Candle | 0.0500 | 0.5700 | 0.8163 | 0.8560 |
-| Capsules | 0.0000 | 0.2700 | 0.7153 | 0.8556 |
-| Cashew | 0.0200 | 0.4800 | 0.9480 | 0.9700 |
+| Category | Calibrated Threshold | Test FPR | Test TPR | ROC-AUC | Average Precision |
+|---|---:|---:|---:|---:|---:|
+| Candle | 1.154599 | 0.0500 | 0.5700 | 0.8163 | 0.8560 |
+| Capsules | 2.130894 | 0.0000 | 0.2700 | 0.7153 | 0.8556 |
+| Cashew | 1.590245 | 0.0200 | 0.4800 | 0.9480 | 0.9700 |
 
 The results illustrate a trade-off between false-positive control and anomaly detection. Capsules achieved a test FPR of 0%, but its TPR was only 27%, meaning that many anomalous images were not detected at the calibrated threshold.
 
