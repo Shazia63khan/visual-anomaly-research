@@ -99,25 +99,35 @@ The robustness results are saved in:
 - `results/knn_robustness.csv` — handcrafted feature sensitivity analysis.
 - `results/dinov2_robustness.csv` — DINOv2 feature sensitivity analysis.
 
-## Normal-Only Validation and Threshold Calibration
+## Normal-Only Threshold Calibration and Test Evaluation
 
-A separate calibration experiment was conducted using only normal training images for candle, capsules, and cashew.
+A separate experiment evaluated threshold calibration using normal training images from the VisA categories candle, capsules, and cashew.
 
-For each category, the normal training images were divided into a fitting subset and a validation subset using a fixed random seed (42). The feature standardisation statistics were fitted on the fitting subset only.
+For each category, the normal training images were divided into a fitting subset and a calibration subset using random seed 42. Feature standardisation and the k-NN model were fitted using only the fitting subset. The experiment used \(k=5\), and the 95th percentile of calibration normal-image scores was selected as the anomaly threshold.
 
-| Category | Fitting Images | Validation Images |
-|---|---:|---:|
-| Candle | 720 | 180 |
-| Capsules | 434 | 108 |
-| Cashew | 360 | 90 |
+The calibrated threshold was then evaluated on the official test set without using test labels to select the threshold.
 
-Handcrafted-feature k-NN scores were calculated for validation images using k values of 1, 3, 5, 9, and 15. The 95th percentile of the validation normal scores was recorded as a candidate threshold for each setting.
+| Category | Fit Normal Images | Calibration Normal Images | Test Images |
+|---|---:|---:|---:|
+| Candle | 720 | 180 | 200 |
+| Capsules | 434 | 108 | 160 |
+| Cashew | 360 | 90 | 150 |
 
-The resulting validation score distributions and thresholds are saved in `results/normal_only_validation.csv`.
+### Independent Test Results
 
-This experiment characterises anomaly scores on normal images and explores threshold calibration. It does **not** measure anomaly-detection accuracy because the validation subset contains no anomalous images. ROC-AUC and AP cannot be calculated from this normal-only subset.
+| Category | Test FPR | Test TPR | ROC-AUC | Average Precision |
+|---|---:|---:|---:|---:|
+| Candle | 0.0500 | 0.5700 | 0.8163 | 0.8560 |
+| Capsules | 0.0000 | 0.2700 | 0.7153 | 0.8556 |
+| Cashew | 0.0200 | 0.4800 | 0.9480 | 0.9700 |
 
-The observed validation false-positive proportions were approximately 5–5.6%. These proportions are calculated on the same normal validation scores used to derive the thresholds, so they are not independent estimates of the false-positive rate on unseen data. Further evaluation on separate labelled validation data would be needed to assess threshold performance on both normal and anomalous examples.
+The results illustrate a trade-off between false-positive control and anomaly detection. Capsules achieved a test FPR of 0%, but its TPR was only 27%, meaning that many anomalous images were not detected at the calibrated threshold.
+
+ROC-AUC and Average Precision measure anomaly-score ranking across thresholds, while FPR and TPR measure classification performance at the selected threshold.
+
+These results are preliminary and cover only three categories. The observed test FPR is not guaranteed to equal the nominal 5% calibration target because the threshold is estimated from a finite calibration sample. The calibration experiment also uses fewer fitting images than the original official baseline, so the two experiments are not directly equivalent.
+
+The complete calibration and test-evaluation metrics are saved in `results/normal_only_validation.csv`.
 
 ## Result Visualisations
 
