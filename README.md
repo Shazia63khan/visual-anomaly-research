@@ -231,13 +231,13 @@ python src/dinov2_robustness.py
 
 These scripts evaluate the specified k values on the official test split. Interpret these results as exploratory sensitivity analysis rather than independent model selection.
 
-### 7. Run Normal-Only Calibration
+### 7. Run Normal-Only Threshold Calibration and Test Evaluation
 
 ```bash
 python src/validation_knn.py
 ```
 
-This script splits normal training images into fitting and validation subsets and saves candidate thresholds and normal-score statistics to `results/normal_only_validation.csv`. It does not calculate anomaly-detection metrics.
+This script splits normal training images into fitting and calibration subsets, fits the handcrafted-feature k-NN model using only the fitting subset, and calibrates an anomaly threshold using normal calibration scores. It then evaluates the frozen model and threshold on the official test set and saves the results to `results/normal_only_validation.csv`.
 
 ## Limitations and Future Work
 
@@ -246,7 +246,8 @@ This script splits normal training images into fitting and validation subsets an
 - The handcrafted baseline uses a small set of basic image statistics and gradients, so it does not represent all possible traditional feature methods.
 - The evaluation uses a simple k-NN scoring procedure and one fixed setting for the main comparison.
 - The k-sweep is exploratory and uses the official test set; it should not be used to claim independently selected optimal hyperparameters.
-- The normal-only calibration experiment cannot measure detection performance on anomalous images.
+- Threshold calibration uses only normal training images, while detection performance is evaluated on the official test set.
+- The test set has already been examined in baseline and exploratory k-sweep experiments, so repeated model selection based on these results may introduce bias.
 - Statistical significance and run-to-run variability have not been established.
 - Results may depend on image preprocessing, feature extraction, and the selected scoring procedure.
 
