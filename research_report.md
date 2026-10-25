@@ -93,21 +93,35 @@ DINOv2 maintained higher ROC-AUC and Average Precision than the handcrafted base
 
 This analysis shows that performance depends on the category and scoring configuration. Because this sweep uses the official test set, it is treated as exploratory analysis rather than independent hyperparameter selection. The main comparison retains the prespecified k = 5 setting.
 
-## 7. Normal-Only Threshold Calibration
+## 7. Normal-Only Threshold Calibration and Test Evaluation
 
-A separate experiment divided the normal training images into fitting and validation subsets using random seed 42.
+A separate experiment evaluated threshold calibration using normal training images from the official VisA split. For each category, the normal training images were randomly divided into a fitting subset and a calibration subset using random seed 42. The fitting subset was used to fit the feature scaler and k-nearest-neighbour model, while the calibration subset was used exclusively to select a threshold.
 
-| Category | Fitting Images | Validation Images |
-|---|---:|---:|
-| Candle | 720 | 180 |
-| Capsules | 434 | 108 |
-| Cashew | 360 | 90 |
+The experiment used \(k=5\) and selected the 95th-percentile calibration score as the anomaly threshold. The fitted model and calibrated threshold were then evaluated on the official test set without using test labels to select the threshold.
 
-For each category and each tested k value, the 95th percentile of the validation normal-image scores was recorded as a candidate threshold.
+| Category | Fit Normal Images | Calibration Normal Images | Test Images |
+|---|---:|---:|---:|
+| Candle | 720 | 180 | 200 |
+| Capsules | 434 | 108 | 160 |
+| Cashew | 360 | 90 | 150 |
 
-The observed false-positive proportions on the same validation samples were approximately 5–5.6%. These values describe the calibration samples only; they are not independent estimates of performance on unseen data.
+### 7.1 Independent Test Results
 
-Since this validation subset contains only normal images, it cannot be used to calculate ROC-AUC or Average Precision or to assess how well the threshold detects anomalies.
+| Category | Calibrated Threshold | Test FPR | Test TPR | ROC-AUC | Average Precision |
+|---|---:|---:|---:|---:|---:|
+| Candle | 1.154599 | 0.0500 | 0.5700 | 0.8163 | 0.8560 |
+| Capsules | 2.130894 | 0.0000 | 0.2700 | 0.7153 | 0.8556 |
+| Cashew | 1.590245 | 0.0200 | 0.4800 | 0.9480 | 0.9700 |
+
+The results illustrate the trade-off between false-positive control and anomaly detection. The calibrated threshold produced a test false-positive rate of 5% for candle, 0% for capsules, and 2% for cashew. However, the corresponding true-positive rates were 57%, 27%, and 48%, respectively. In particular, the capsules result shows that a low false-positive rate does not necessarily imply strong anomaly detection.
+
+ROC-AUC and Average Precision evaluate the ranking of anomaly scores across thresholds, whereas FPR and TPR evaluate predictions at the selected threshold. These metrics therefore provide complementary information.
+
+### 7.2 Limitations
+
+The calibration threshold was estimated from a finite sample of normal images, so the resulting test FPR is not guaranteed to equal the nominal 5% target. The observed test rates are estimates based on relatively small test subsets and may vary across different data samples.
+
+This experiment uses handcrafted image features and a fixed value of \(k=5\). Its results should not be directly compared with the earlier baseline as if both models had been fitted on identical training data, because this experiment reserves a portion of normal training images for threshold calibration. The findings are preliminary and are limited to three VisA categories.
 
 ## 8. Limitations
 
